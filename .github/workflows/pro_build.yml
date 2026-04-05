@@ -1,0 +1,41 @@
+name: Ubuntu-Professional-G62-Remaster
+on: workflow_dispatch
+
+jobs:
+  remaster:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 1. سحب الكود المصدري
+        uses: actions/checkout@v4
+
+      - name: 2. تنظيف السيرفر (توفير 45 جيجا)
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/share/boost
+          sudo docker image prune -a -f
+          sudo apt-get clean
+
+      - name: 3. تثبيت الأدوات السيادية
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xorriso squashfs-tools wget curl rsync
+
+      - name: 4. تشغيل مرحلة التحميل والفك (Step-01)
+        run: |
+          chmod +x scripts/01_prepare_iso.sh
+          sudo ./scripts/01_prepare_iso.sh
+
+      - name: 5. تشغيل مرحلة الحقن البرمجي (Step-02)
+        run: |
+          chmod +x scripts/02_chroot_magic.sh
+          sudo ./scripts/02_chroot_magic.sh
+
+      - name: 6. تشغيل مرحلة التغليف النهائي (Step-03)
+        run: |
+          chmod +x scripts/03_repack_iso.sh
+          sudo ./scripts/03_repack_iso.sh
+
+      - name: 7. رفع النسخة النهائية
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ubuntu-G62-Ultimate-Edition
+          path: output/Ubuntu-G62-Final.iso
